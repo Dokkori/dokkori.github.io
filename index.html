@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>객관식 퀴즈</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .quiz-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option:hover {
+            background-color: #e9ecef;
+        }
+
+        .option.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .option.incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .next-btn {
+            display: none;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .next-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .score-display {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="score-display">
+        점수: <span id="score">0</span> / <span id="total">0</span>
+    </div>
+    <div id="quiz-container"></div>
+
+    <script>
+        // 퀴즈 데이터
+        const quizData = [
+            {
+                question: "대한민국의 수도는?",
+                options: ["서울", "부산", "인천", "대구"],
+                correct: 0
+            },
+            {
+                question: "1 + 1 = ?",
+                options: ["1", "2", "3", "4"],
+                correct: 1
+            },
+            {
+                question: "태양계에서 가장 큰 행성은?",
+                options: ["지구", "화성", "목성", "토성"],
+                correct: 2
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        // 초기 점수 표시 업데이트
+        document.getElementById('total').textContent = quizData.length;
+        document.getElementById('score').textContent = score;
+
+        function displayQuestion() {
+            const quizContainer = document.getElementById('quiz-container');
+            const questionData = quizData[currentQuestion];
+
+            // 문제 컨테이너 생성
+            const questionContainer = document.createElement('div');
+            questionContainer.className = 'quiz-container';
+
+            // 문제 텍스트
+            const questionElement = document.createElement('div');
+            questionElement.className = 'question';
+            questionElement.textContent = `${currentQuestion + 1}. ${questionData.question}`;
+
+            // 보기 컨테이너
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'options';
+
+            // 보기 생성
+            questionData.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.onclick = () => checkAnswer(index, optionElement, optionsContainer);
+                optionsContainer.appendChild(optionElement);
+            });
+
+            // 피드백 메시지 요소
+            const feedback = document.createElement('div');
+            feedback.className = 'feedback';
+            
+            // 다음 문제 버튼
+            const nextButton = document.createElement('button');
+            nextButton.className = 'next-btn';
+            nextButton.textContent = '다음 문제';
+            nextButton.onclick = nextQuestion;
+
+            // 요소들을 컨테이너에 추가
+            questionContainer.appendChild(questionElement);
+            questionContainer.appendChild(optionsContainer);
+            questionContainer.appendChild(feedback);
+            questionContainer.appendChild(nextButton);
+
+            // 기존 문제를 새 문제로 교체
+            quizContainer.innerHTML = '';
+            quizContainer.appendChild(questionContainer);
+        }
+
+        function checkAnswer(selectedIndex, selectedOption, optionsContainer) {
+            if (isAnswered) return; // 이미 답을 선택했다면 반환
+
+            isAnswered = true;
+            const correctIndex = quizData[currentQuestion].correct;
+            const feedback = selectedOption.parentNode.nextElementSibling;
+            const nextButton = feedback.nextElementSibling;
+
+            // 모든 보기에 대한 클릭 비활성화
+            Array.from(optionsContainer.children).forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+
+            if (selectedIndex === correctIndex) {
+                // 정답인 경우
+                selectedOption.classList.add('correct');
+                feedback.textContent = '정답입니다!';
+                feedback.className = 'feedback correct';
+                score++;
+                document.getElementById('score').textContent = score;
+            } else {
+                // 오답인 경우
+                selectedOption.classList.add('incorrect');
+                optionsContainer.children[correctIndex].classList.add('correct');
+                feedback.textContent = '틀렸습니다. 다시 한번 생각해보세요.';
+                feedback.className = 'feedback incorrect';
+            }
+
+            feedback.style.display = 'block';
+            
+            // 마지막 문제가 아닌 경우에만 다음 버튼 표시
+            if (currentQuestion < quizData.length - 1) {
+                nextButton.style.display = 'block';
+            } else {
+                feedback.textContent += ' 퀴즈가 종료되었습니다!';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                isAnswered = false;
+                displayQuestion();
+            }
+        }
+
+        // 첫 문제 표시
+        displayQuestion();
+    </script>
+</body>
+</html>
